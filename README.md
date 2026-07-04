@@ -9,7 +9,7 @@ Reach for this when an integration has to be bulletproof — payments that can't
 ## Install
 
 - **From the catalog:** [skillme.dev/pack/api-integration-engineering](https://skillme.dev/pack/api-integration-engineering) — install the whole pack into Claude in one step.
-- **With the skills CLI:** `npx skills add aouellets/api-integration-engineering`
+- **With the skills CLI:** `npx skills add SkillMedev/api-integration-engineering`
 - **Manually:** copy any `skills/<slug>/SKILL.md` into your Claude skills directory.
 
 ## Skills in this pack
