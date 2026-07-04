@@ -17,6 +17,47 @@ A webhook endpoint is an unauthenticated, internet-facing write path that an att
 5. **Process asynchronously and order-tolerantly.** Run all business logic in the background worker, not the request. Webhooks arrive out of order, so never assume sequence: act on the event's own version/timestamp, or refetch current state from the provider's API rather than mutating from a possibly-stale payload. For strict ordering, partition the queue by resource ID.
 6. **Return the right status.** 2xx tells the sender to stop retrying; non-2xx requests a retry. A malformed-but-authentic event goes to a dead-letter queue and is acked, not retried forever. Log event ID and type on every receipt.
 
+## Worked example
+
+The classic broken handler versus the hardened one (Express + Stripe-style signatures):
+
+**Bad:**
+
+```js
+app.use(express.json()); // global parser destroys the raw body
+
+app.post("/webhooks/stripe", async (req, res) => {
+  if (req.headers["stripe-signature"] !== computeSig(JSON.stringify(req.body))) {
+    return res.status(401).end();       // re-serialized body ≠ signed bytes; string compare leaks timing
+  }
+  await fulfillOrder(req.body);          // business logic inside the request
+  await sendReceiptEmail(req.body);      // slow third-party call before the ack
+  res.status(200).end();                 // sender already timed out and is retrying
+});
+```
+
+Three failures: the HMAC is computed over a re-encoded body (verification breaks or, worse, gets disabled "temporarily"), `!==` is not constant-time, and the ack waits on business logic — so the sender times out, retries, and double-fulfills.
+
+**Good:**
+
+```js
+app.post("/webhooks/stripe",
+  express.raw({ type: "application/json" }),   // raw bytes, this route only
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+    if (!verifySignatureConstantTime(req.body, sig, [SECRET_CURRENT, SECRET_PREVIOUS])) {
+      return res.status(401).end();
+    }
+    if (!timestampWithinTolerance(sig, 300)) {   // 5-minute replay window
+      return res.status(401).end();
+    }
+    const event = JSON.parse(req.body);          // parse only after verification
+    await store.saveRawEvent(event.id, req.body); // durable first
+    await queue.enqueue("webhook", { eventId: event.id });
+    res.status(200).end();                        // ack in milliseconds; work happens in the worker
+  });
+```
+
 ## Quality bar
 
 - Signature is verified against raw bytes with a constant-time compare; tampered or unsigned requests get 401 and touch nothing else.
@@ -24,6 +65,15 @@ A webhook endpoint is an unauthenticated, internet-facing write path that an att
 - Replays outside the timestamp window are rejected.
 - The synchronous path is verify → persist → enqueue → 2xx, with no business logic, downstream calls, or blocking DB writes beyond the durable store.
 - A process crash after ack cannot lose the event; redelivery re-runs it safely.
+
+## Deliverable
+
+Produce a hardened webhook receiver consisting of:
+
+1. **The route handler** implementing the verify → persist → enqueue → ack pipeline, with raw-body capture scoped to this route.
+2. **The verification module**: constant-time HMAC check over raw bytes, dual-secret rotation support, and timestamp-window replay rejection.
+3. **The background worker skeleton** that loads the stored raw event by ID, processes order-tolerantly, and routes poison events to a dead-letter queue.
+4. **A checklist of what was hardened** — each Quality bar item marked verified, plus any provider-specific notes (header names, tolerance window, retry policy).
 
 ## Do NOT
 
