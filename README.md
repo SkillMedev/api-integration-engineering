@@ -1,16 +1,17 @@
 # API & Integration Engineering
 
-**For backend engineers: make every API you build or consume survive production.** — built in-house by [Skill&nbsp;Me](https://skillme.dev).
+**For backend engineers: make every API you build or consume survive production.** — built in-house by [Skill&nbsp;Me](https://skillme.dev/?utm_source=github&utm_medium=readme&utm_campaign=pack-api-integration-engineering).
 
 Reach for this when an integration has to be bulletproof - payments that can't double-charge, webhooks you don't control, third-party APIs that throttle or fall over, and contracts that change under you. It turns the hard-won production patterns into skills: idempotent writes, hardened webhook receivers, correct backoff under rate limits, circuit breakers and bulkheads for flaky upstreams, cursor pagination and delta sync, typed clients from OpenAPI, and date-pinned versioning with a real deprecation path. Install it before the integration that, if it breaks, pages you at 3am.
 
-⭐ **If this is useful, star the repo** — it's how we gauge what to build next.
-
 ## Install
 
-- **From the catalog:** [skillme.dev/pack/api-integration-engineering](https://skillme.dev/pack/api-integration-engineering) — install the whole pack into Claude in one step.
+- **Claude, ChatGPT, Codex, Cursor (connector):** [install the whole pack from skillme.dev](https://skillme.dev/pack/api-integration-engineering?utm_source=github&utm_medium=readme&utm_campaign=pack-api-integration-engineering) — one connection, then ask for any skill by name.
+- **As files for Codex, Cursor, or Claude Code:** `npx @skillme/cli add idempotency-enforcer webhook-receiver-hardener rate-limit-handler circuit-breaker-builder api-versioning-strategist pagination-and-sync-engineer api-client-generator api-design --target all`
 - **With the skills CLI:** `npx skills add SkillMedev/api-integration-engineering`
-- **Manually:** copy any `skills/<slug>/SKILL.md` into your Claude skills directory.
+- **Manually:** copy any `skills/<slug>/SKILL.md` into `.agents/skills/`, `.cursor/skills/`, or `.claude/skills/`.
+
+⭐ **If this is useful, star the repo** — it's how we gauge what to build next.
 
 ## Skills in this pack
 
@@ -27,4 +28,4 @@ Reach for this when an integration has to be bulletproof - payments that can't d
 ## License
 
 MIT — see [LICENSE](LICENSE). Skills are portable `SKILL.md` files; the canonical
-copies live in the [Skill&nbsp;Me catalog](https://skillme.dev).
+copies live in the [Skill&nbsp;Me catalog](https://skillme.dev/browse?utm_source=github&utm_medium=readme&utm_campaign=pack-api-integration-engineering).
